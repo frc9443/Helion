@@ -66,30 +66,32 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final boolean isTurnMotorInverted = true;
   private final Rotation2d absoluteEncoderOffset;
 
+  String CANIVORE = "HelionDrive";
+
   public ModuleIOTalonFX(int index) {
     switch (index) {
-      case 0:
-        driveTalon = new TalonFX(0);
-        turnTalon = new TalonFX(1);
-        cancoder = new CANcoder(2);
+      case 0: // FL
+        driveTalon = new TalonFX(0, CANIVORE);
+        turnTalon = new TalonFX(1, CANIVORE);
+        cancoder = new CANcoder(2, CANIVORE);
         absoluteEncoderOffset = new Rotation2d(0.0); // MUST BE CALIBRATED
         break;
-      case 1:
-        driveTalon = new TalonFX(3);
-        turnTalon = new TalonFX(4);
-        cancoder = new CANcoder(5);
+      case 1: // FR
+        driveTalon = new TalonFX(3, CANIVORE);
+        turnTalon = new TalonFX(4, CANIVORE);
+        cancoder = new CANcoder(5, CANIVORE);
         absoluteEncoderOffset = new Rotation2d(0.0); // MUST BE CALIBRATED
         break;
-      case 2:
-        driveTalon = new TalonFX(6);
-        turnTalon = new TalonFX(7);
-        cancoder = new CANcoder(8);
+      case 2: // BL
+        driveTalon = new TalonFX(6, CANIVORE);
+        turnTalon = new TalonFX(7, CANIVORE);
+        cancoder = new CANcoder(8, CANIVORE);
         absoluteEncoderOffset = new Rotation2d(0.0); // MUST BE CALIBRATED
         break;
-      case 3:
-        driveTalon = new TalonFX(9);
-        turnTalon = new TalonFX(10);
-        cancoder = new CANcoder(11);
+      case 3: // BR
+        driveTalon = new TalonFX(9, CANIVORE);
+        turnTalon = new TalonFX(10, CANIVORE);
+        cancoder = new CANcoder(11, CANIVORE);
         absoluteEncoderOffset = new Rotation2d(0.0); // MUST BE CALIBRATED
         break;
       default:
