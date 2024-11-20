@@ -62,7 +62,7 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final double DRIVE_GEAR_RATIO = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
   private final double TURN_GEAR_RATIO = 12.8; // (not 150.0 / 7.0;)
 
-  private final boolean isTurnMotorInverted = true;
+  private final boolean isTurnMotorInverted = false;
   private final Rotation2d absoluteEncoderOffset;
 
   String CANIVORE = "HelionDrive";
