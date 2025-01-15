@@ -23,6 +23,10 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 
 public class FlywheelIOTalonFX implements FlywheelIO {
   private static final double GEAR_RATIO = 1.5;
@@ -30,11 +34,11 @@ public class FlywheelIOTalonFX implements FlywheelIO {
   private final TalonFX leader = new TalonFX(0);
   private final TalonFX follower = new TalonFX(1);
 
-  private final StatusSignal<Double> leaderPosition = leader.getPosition();
-  private final StatusSignal<Double> leaderVelocity = leader.getVelocity();
-  private final StatusSignal<Double> leaderAppliedVolts = leader.getMotorVoltage();
-  private final StatusSignal<Double> leaderCurrent = leader.getSupplyCurrent();
-  private final StatusSignal<Double> followerCurrent = follower.getSupplyCurrent();
+  private final StatusSignal<Angle> leaderPosition = leader.getPosition();
+  private final StatusSignal<AngularVelocity> leaderVelocity = leader.getVelocity();
+  private final StatusSignal<Voltage> leaderAppliedVolts = leader.getMotorVoltage();
+  private final StatusSignal<Current> leaderCurrent = leader.getSupplyCurrent();
+  private final StatusSignal<Current> followerCurrent = follower.getSupplyCurrent();
 
   public FlywheelIOTalonFX() {
     var config = new TalonFXConfiguration();
@@ -55,31 +59,23 @@ public class FlywheelIOTalonFX implements FlywheelIO {
   public void updateInputs(FlywheelIOInputs inputs) {
     BaseStatusSignal.refreshAll(
         leaderPosition, leaderVelocity, leaderAppliedVolts, leaderCurrent, followerCurrent);
-    inputs.positionRad = Units.rotationsToRadians(leaderPosition.getValueAsDouble()) / GEAR_RATIO;
-    inputs.velocityRadPerSec =
-        Units.rotationsToRadians(leaderVelocity.getValueAsDouble()) / GEAR_RATIO;
-    inputs.appliedVolts = leaderAppliedVolts.getValueAsDouble();
+    inputs.positionRad = leaderPosition.getValue().div(GEAR_RATIO);
+    inputs.velocityRadPerSec = leaderVelocity.getValue().div(GEAR_RATIO);
+    inputs.appliedVolts = leaderAppliedVolts.getValue();
     inputs.currentAmps =
         new double[] {leaderCurrent.getValueAsDouble(), followerCurrent.getValueAsDouble()};
   }
 
   @Override
-  public void setVoltage(double volts) {
+  public void setVoltage(Voltage volts) {
     leader.setControl(new VoltageOut(volts));
   }
 
   @Override
-  public void setVelocity(double velocityRadPerSec, double ffVolts) {
+  public void setVelocity(AngularVelocity velocityRadPerSec, Voltage ffVolts) {
     leader.setControl(
-        new VelocityVoltage(
-            Units.radiansToRotations(velocityRadPerSec),
-            0.0,
-            true,
-            ffVolts,
-            0,
-            false,
-            false,
-            false));
+        new VelocityVoltage(velocityRadPerSec).withFeedForward(ffVolts)
+    );
   }
 
   @Override

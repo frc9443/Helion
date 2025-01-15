@@ -17,6 +17,9 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.ParentDevice;
+
+import edu.wpi.first.units.measure.Angle;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -62,12 +65,12 @@ public class PhoenixOdometryThread extends Thread {
     }
   }
 
-  public Queue<Double> registerSignal(ParentDevice device, StatusSignal<Double> signal) {
+  public Queue<Double> registerSignal(ParentDevice device, StatusSignal<Angle> signal) {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     signalsLock.lock();
     Drive.odometryLock.lock();
     try {
-      isCANFD = CANBus.isNetworkFD(device.getNetwork());
+      isCANFD = new CANBus(device.getNetwork()).isNetworkFD();
       BaseStatusSignal[] newSignals = new BaseStatusSignal[signals.length + 1];
       System.arraycopy(signals, 0, newSignals, 0, signals.length);
       newSignals[signals.length] = signal;

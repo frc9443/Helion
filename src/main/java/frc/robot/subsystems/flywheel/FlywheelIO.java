@@ -13,14 +13,23 @@
 
 package frc.robot.subsystems.flywheel;
 
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import org.littletonrobotics.junction.AutoLog;
+
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 
 public interface FlywheelIO {
   @AutoLog
   public static class FlywheelIOInputs {
-    public double positionRad = 0.0;
-    public double velocityRadPerSec = 0.0;
-    public double appliedVolts = 0.0;
+    public Angle positionRad = Rotations.of(0);
+    public AngularVelocity velocityRadPerSec = RotationsPerSecond.of(0);
+    public Voltage appliedVolts = Volts.of(0);
     public double[] currentAmps = new double[] {};
   }
 
@@ -28,10 +37,10 @@ public interface FlywheelIO {
   public default void updateInputs(FlywheelIOInputs inputs) {}
 
   /** Run open loop at the specified voltage. */
-  public default void setVoltage(double volts) {}
+  public default void setVoltage(Voltage volts) {}
 
   /** Run closed loop at the specified velocity. */
-  public default void setVelocity(double velocityRadPerSec, double ffVolts) {}
+  public default void setVelocity(AngularVelocity velocityRadPerSec, Voltage ffVolts) {}
 
   /** Stop in open loop. */
   public default void stop() {}

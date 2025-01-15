@@ -16,6 +16,7 @@ package frc.robot.subsystems.drive;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
@@ -29,12 +30,29 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 public class ModuleIOSim implements ModuleIO {
   private static final double LOOP_PERIOD_SECS = 0.02;
 
-  private DCMotorSim driveSim = new DCMotorSim(DCMotor.getNEO(1), 6.75, 0.025);
-  private DCMotorSim turnSim = new DCMotorSim(DCMotor.getNEO(1), 150.0 / 7.0, 0.004);
+  private DCMotorSim driveSim;
+  private DCMotorSim turnSim;
+
+  public static final double driveMotorReduction =
+      (45.0 * 22.0) / (14.0 * 15.0); // MAXSwerve with 14 pinion teeth and 22 spur teeth
+  public static final double turnMotorReduction = 9424.0 / 203.0;
 
   private final Rotation2d turnAbsoluteInitPosition = new Rotation2d(Math.random() * 2.0 * Math.PI);
   private double driveAppliedVolts = 0.0;
   private double turnAppliedVolts = 0.0;
+
+  public ModuleIOSim() {
+    DCMotor driveGearbox = DCMotor.getNEO(1);
+    driveSim =
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(driveGearbox, 0.025, driveMotorReduction),
+            driveGearbox);
+    DCMotor turnGearbox = DCMotor.getNeo550(1);
+    turnSim =
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(turnGearbox, 0.004, turnMotorReduction),
+            turnGearbox);
+  }
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {

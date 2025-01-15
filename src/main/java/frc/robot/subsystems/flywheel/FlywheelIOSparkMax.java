@@ -13,13 +13,22 @@
 
 package frc.robot.subsystems.flywheel;
 
-import com.revrobotics.CANSparkBase.ControlType;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkPIDController;
-import com.revrobotics.SparkPIDController.ArbFFUnits;
-import edu.wpi.first.math.util.Units;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.SparkMax;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 
 /**
  * NOTE: To use the Spark Flex / NEO Vortex, replace all instances of "CANSparkMax" with
@@ -28,49 +37,43 @@ import edu.wpi.first.math.util.Units;
 public class FlywheelIOSparkMax implements FlywheelIO {
   private static final double GEAR_RATIO = 1.5;
 
-  private final CANSparkMax leader = new CANSparkMax(0, MotorType.kBrushless);
-  private final CANSparkMax follower = new CANSparkMax(1, MotorType.kBrushless);
+  private final SparkMax leader = new SparkMax(0, MotorType.kBrushless);
+  private final SparkMax follower = new SparkMax(1, MotorType.kBrushless);
   private final RelativeEncoder encoder = leader.getEncoder();
-  private final SparkPIDController pid = leader.getPIDController();
+  private final SparkClosedLoopController pid = leader.getClosedLoopController();
 
   public FlywheelIOSparkMax() {
-    leader.restoreFactoryDefaults();
-    follower.restoreFactoryDefaults();
+    SparkMaxConfig leaderConfig = new SparkMaxConfig();
+    SparkMaxConfig followerConfig = new SparkMaxConfig();
 
-    leader.setCANTimeout(250);
-    follower.setCANTimeout(250);
+    leaderConfig.inverted(false).voltageCompensation(12.0).smartCurrentLimit(30);
+    followerConfig.follow(leader);
 
-    leader.setInverted(false);
-    follower.follow(leader, false);
-
-    leader.enableVoltageCompensation(12.0);
-    leader.setSmartCurrentLimit(30);
-
-    leader.burnFlash();
-    follower.burnFlash();
+    leader.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    follower.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   @Override
   public void updateInputs(FlywheelIOInputs inputs) {
-    inputs.positionRad = Units.rotationsToRadians(encoder.getPosition() / GEAR_RATIO);
+    inputs.positionRad = Rotations.of(encoder.getPosition() / GEAR_RATIO);
     inputs.velocityRadPerSec =
-        Units.rotationsPerMinuteToRadiansPerSecond(encoder.getVelocity() / GEAR_RATIO);
-    inputs.appliedVolts = leader.getAppliedOutput() * leader.getBusVoltage();
+        RotationsPerSecond.of(60.0 * encoder.getVelocity() / GEAR_RATIO); // RPM to RPS
+    inputs.appliedVolts = Volts.of(leader.getAppliedOutput() * leader.getBusVoltage());
     inputs.currentAmps = new double[] {leader.getOutputCurrent(), follower.getOutputCurrent()};
   }
 
   @Override
-  public void setVoltage(double volts) {
+  public void setVoltage(Voltage volts) {
     leader.setVoltage(volts);
   }
 
   @Override
-  public void setVelocity(double velocityRadPerSec, double ffVolts) {
+  public void setVelocity(AngularVelocity velocity, Voltage ffVolts) {
     pid.setReference(
-        Units.radiansPerSecondToRotationsPerMinute(velocityRadPerSec) * GEAR_RATIO,
+        velocity.in(RotationsPerSecond) * 60.0 * GEAR_RATIO,
         ControlType.kVelocity,
-        0,
-        ffVolts,
+        ClosedLoopSlot.kSlot0,
+        ffVolts.in(Volts),
         ArbFFUnits.kVoltage);
   }
 
@@ -81,9 +84,8 @@ public class FlywheelIOSparkMax implements FlywheelIO {
 
   @Override
   public void configurePID(double kP, double kI, double kD) {
-    pid.setP(kP, 0);
-    pid.setI(kI, 0);
-    pid.setD(kD, 0);
-    pid.setFF(0, 0);
+    SparkMaxConfig config = new SparkMaxConfig();
+    config.closedLoop.pidf(kP, kI, kD, kD);
+    leader.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 }
