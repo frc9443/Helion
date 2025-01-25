@@ -81,7 +81,7 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
         flywheel = new Flywheel(new FlywheelIOSim());
-        vision = new Vision(drive::addVisionMeasurement, new VisionIOPhotonVision("photonvision", robotToCamera0));
+        vision = new Vision(drive::addVisionMeasurement, new VisionIOPhotonVision("Arducam_OV2311_USB_Camera_1", robotToCamera0));
         // drive = new Drive(
         // new GyroIOPigeon2(true),
         // new ModuleIOTalonFX(0),
